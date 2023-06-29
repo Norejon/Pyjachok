@@ -1,0 +1,70 @@
+package com.example.pyjachok.controllers;
+
+import com.example.pyjachok.models.Establishment;
+import com.example.pyjachok.models.News;
+import com.example.pyjachok.services.EstablishmentService;
+import lombok.AllArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.security.Principal;
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@AllArgsConstructor
+@RequestMapping("/establishments")
+public class EstablishmentController {
+    private EstablishmentService establishmentService;
+
+    @GetMapping
+    public List<Establishment> getEstablishments() {
+        return establishmentService.getAll();
+    }
+
+    @GetMapping("/{id}")
+    public Establishment getEstablishmentById(@PathVariable int id) {
+        return establishmentService.getById(id);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteEstablishmentsById(@PathVariable int id) {
+        establishmentService.deleteEstablishment(id);
+        return ResponseEntity.ok("Establishment deleted successfully");
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<String> updateEstablishmentsById(@PathVariable int id, @RequestBody Map<String, Object> requestBody) {
+        establishmentService.updateEstablishment(id, requestBody);
+        return ResponseEntity.ok("Establishment updated successfully");
+    }
+
+    @GetMapping("/user")
+    public List<Establishment> getEstablishmentsByUser(Principal principal) {
+        String email = principal.getName();
+        return establishmentService.getEstablishmentsByUserEmail(email);
+    }
+
+    @PostMapping("/{id}/news/add")
+    public ResponseEntity<String> addNewToEstablishment(@PathVariable int id, @RequestBody News news) {
+        return establishmentService.addNewToEstablishment(id, news);
+    }
+
+    @PutMapping("/news/{id}")
+    public ResponseEntity<String> updateNewInEstablishment(@PathVariable int id, @RequestBody News updatedNews) {
+        return establishmentService.updateNewInEstablishment(id, updatedNews);
+    }
+
+    @PutMapping("/{establishmentId}/users/{userId}")
+    public ResponseEntity<String> changeEstablishmentUser(@PathVariable int establishmentId, @PathVariable int userId) {
+        return establishmentService.changeEstablishmentUser(establishmentId, userId);
+    }
+    @PutMapping("/activite/{id}")
+    public void activiteEstablishment(@PathVariable int id){
+        establishmentService.activateEstablishment(id);
+    }
+    @PutMapping("/desactivite/{id}")
+    public void desActiviteEstablishment(@PathVariable int id){
+        establishmentService.desActivateEstablishment(id);
+    }
+}
