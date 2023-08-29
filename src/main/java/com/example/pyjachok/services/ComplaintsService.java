@@ -4,12 +4,9 @@ import com.example.pyjachok.dao.ComplaintsDAO;
 import com.example.pyjachok.dao.EstablishmentDAO;
 import com.example.pyjachok.dao.UserDAO;
 import com.example.pyjachok.models.Complaints;
-import com.example.pyjachok.models.Establishment;
-import com.example.pyjachok.models.User;
+import jakarta.mail.MessagingException;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import java.security.Principal;
 import java.util.List;
@@ -21,17 +18,19 @@ public class ComplaintsService {
     private ComplaintsDAO complaintsDAO;
     private UserDAO userDAO;
     private EstablishmentDAO establishmentDAO;
+    private MailService mailService;
 
-    public void saveComplaint(Principal principal, int establishmentId, Complaints complaints) {
+    public void saveComplaint(Principal principal, int id, Complaints complaints) throws MessagingException {
         String email = principal.getName();
         String username = userDAO.findByEmail(email).getUsername();
-        String establishmentName = establishmentDAO.getById(establishmentId).getName();
+        String establishmentName = establishmentDAO.getById(id).getName();
 
         complaints.setUserUsername(username);
         complaints.setEstablishmentName(establishmentName);
         complaints.setText(complaints.getText());
 
         complaintsDAO.save(complaints);
+        mailService.sendComplaint(complaints,principal);
         System.out.println("Complaint saved successfully");
     }
 

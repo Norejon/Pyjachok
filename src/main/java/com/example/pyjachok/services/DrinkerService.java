@@ -4,14 +4,12 @@ import com.example.pyjachok.controllers.ExceptionController;
 import com.example.pyjachok.dao.DrinkerDAO;
 import com.example.pyjachok.models.Drinker;
 import com.example.pyjachok.models.Establishment;
-import com.example.pyjachok.models.Grades;
 import com.example.pyjachok.models.User;
 import com.example.pyjachok.models.dto.DrinkerDTO;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 
@@ -23,12 +21,11 @@ public class DrinkerService {
     private EstablishmentService establishmentService;
     private ExceptionController exceptionController;
 
-    //Збереження пиячка
-    public void saveDrinker(DrinkerDTO drinkerDTO, String email) {
+    public void saveDrinker(int id,DrinkerDTO drinkerDTO, String email) {
         try {
             User user = userService.getUserByEmail(email);
 
-            Establishment establishment = establishmentService.getEstablishmentByName(drinkerDTO.getEstablishmentName());
+            Establishment establishment = establishmentService.getById(id);
             if (establishment == null) {
                 throw new IllegalArgumentException("Invalid establishment");
             }
@@ -40,6 +37,7 @@ public class DrinkerService {
             drinker.setCountOfPeople(drinkerDTO.getCountOfPeople());
             drinker.setWhoPay(drinkerDTO.getWhoPay());
             drinker.setBudget(drinkerDTO.getBudget());
+            drinker.setPhone(drinkerDTO.getPhone());
             drinker.setUser(user);
             drinker.setEstablishment(establishment);
 

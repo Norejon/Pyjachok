@@ -1,11 +1,12 @@
 package com.example.pyjachok.models;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
-import lombok.*;
-import org.springframework.context.annotation.Lazy;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.List;
 
@@ -25,7 +26,10 @@ public class Establishment {
     private String name;
     private String photo;
     private String type;
-    private String tags;
+    @ElementCollection
+    @CollectionTable(name = "establishment_tags", joinColumns = @JoinColumn(name = "establishment_id"))
+    @Column(name = "tag")
+    private List<String> tags;
     private int rating;
     private int midle_check;
     private String registration_date;
@@ -42,9 +46,23 @@ public class Establishment {
     @JsonManagedReference
     private List<Grades> gradesList;
 
-    @OneToMany(mappedBy = "establishment")
+    @OneToMany(mappedBy = "establishment", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<News> news;
 
     @OneToMany(mappedBy = "establishment")
     private List<Drinker> drinkers;
+
+    public void calculateRating() {
+        double averageRating = gradesList.stream()
+                .mapToInt(Grades::getGrade)
+                .average()
+                .orElse(0);
+
+        this.rating = (int) averageRating;
+    }
+
+    @OneToOne(mappedBy = "establishment")
+    @JoinColumn(name = "contacts_id")
+    @JsonManagedReference
+    private Contacts contacts;
 }

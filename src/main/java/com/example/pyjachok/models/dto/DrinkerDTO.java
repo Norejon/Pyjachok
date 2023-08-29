@@ -16,6 +16,7 @@ public class DrinkerDTO {
     private int countOfPeople;
     private String whoPay;
     private int budget;
+    private String phone;
     private int establishmentId;
     private String establishmentName;
 }

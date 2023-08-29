@@ -1,16 +1,11 @@
 package com.example.pyjachok.services;
 
-import com.example.pyjachok.dao.EstablishmentDAO;
-import com.example.pyjachok.dao.UserDAO;
-import com.example.pyjachok.models.Establishment;
-import com.example.pyjachok.models.News;
-import com.example.pyjachok.models.User;
-import com.example.pyjachok.models.UserEstablishment;
+import com.example.pyjachok.dao.*;
+import com.example.pyjachok.models.*;
+import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.Collections;
 import java.util.List;
@@ -24,9 +19,16 @@ public class EstablishmentService {
     private EstablishmentDAO establishmentDAO;
     private UserDAO userDAO;
     private NewsService newsService;
+    private UserEstablishmentDAO userEstablishmentDAO;
+    private DrinkerDAO drinkerDAO;
+    private ContactDAO contactDAO;
+    private ContactsService contactsService;
+
 
     public List<Establishment> getAll() {
-        return establishmentDAO.findAll();
+        List<Establishment> establishments = establishmentDAO.findAll();
+        establishments.stream().forEach(Establishment::calculateRating);
+        return establishments;
     }
 
     public void saveEstablishment(Establishment establishment) {
@@ -44,33 +46,73 @@ public class EstablishmentService {
     public void updateEstablishment(int id, Map<String, Object> requestBody) {
         Establishment establishment = establishmentDAO.getById(id);
         if (establishment != null) {
-
             String name = (String) requestBody.get("name");
             String photo = (String) requestBody.get("photo");
             String type = (String) requestBody.get("type");
-
+            List<String> tags = (List<String>) requestBody.get("tags");
+            int midle_check = (int) requestBody.getOrDefault("midle_check", 0);
 
             establishment.setName(name);
             establishment.setPhoto(photo);
             establishment.setType(type);
+            establishment.setTags(tags);
+            establishment.setMidle_check(midle_check);
+            establishment.setSchedule((String) requestBody.get("schedule"));
+            establishment.setLocation((String) requestBody.get("location"));
 
+            System.out.println(establishment.getContacts());
+            Contacts contacts = establishment.getContacts();
+            if (contacts == null) {
+                contacts = new Contacts();
+                establishment.setContacts(contacts);
+            }
+
+            contacts.setWebsite((String) ((Map<String, Object>) requestBody.get("contacts")).get("website"));
+            contacts.setPhone((String) ((Map<String, Object>) requestBody.get("contacts")).get("phone"));
+            contacts.setEmail((String) ((Map<String, Object>) requestBody.get("contacts")).get("email"));
+            contacts.setTelegram((String) ((Map<String, Object>) requestBody.get("contacts")).get("telegram"));
+            contacts.setInstagram((String) ((Map<String, Object>) requestBody.get("contacts")).get("instagram"));
+            contacts.setOthers((String) ((Map<String, Object>) requestBody.get("contacts")).get("others"));
+
+            contacts.setEstablishment(establishment);
+
+            contactsService.saveContacts(contacts);
 
             establishmentDAO.save(establishment);
         }
     }
+    public List<News> getNewsOfEstablishment(int id){
+        Establishment establishment = establishmentDAO.getById(id);
+        if(establishment.getNews().size()==0){
+            return Collections.emptyList();
+        }
+        return establishment.getNews();
+    }
 
+    @Transactional
     public void deleteEstablishment(int id) {
         Establishment establishment = establishmentDAO.getById(id);
         if (establishment != null) {
-            User user = establishment.getUser();
-            if (user != null) {
-                user.getUserEstablishments().removeIf(ue -> ue.getEstablishment().getId() == id);
-                userDAO.save(user);
+            List<UserEstablishment> userEstablishments = userEstablishmentDAO.findByEstablishment(establishment);
+            userEstablishments.forEach(userEstablishmentDAO::delete);
+
+            List<User> users = userDAO.findByFavorite(establishment);
+            users.forEach(user -> user.getFavorite().remove(establishment));
+
+            List<Grades> gradesList = establishment.getGradesList();
+            gradesList.forEach(grades -> grades.setEstablishment(null));
+            gradesList.clear();
+
+            Contacts contacts = establishment.getContacts();
+            if (contacts != null) {
+                establishment.setContacts(null);
+                contacts.setEstablishment(null);
+                contactDAO.delete(contacts);
             }
-            establishmentDAO.deleteById(id);
+
+            establishmentDAO.delete(establishment);
         }
     }
-
     public Establishment getById(int id) {
         List<Establishment> establishments = getAll();
         return establishments.stream()
@@ -85,6 +127,7 @@ public class EstablishmentService {
             List<UserEstablishment> userEstablishments = user.getUserEstablishments();
             return userEstablishments.stream()
                     .map(UserEstablishment::getEstablishment)
+                    .peek(Establishment::calculateRating)
                     .collect(Collectors.toList());
         }
         return Collections.emptyList();
@@ -107,11 +150,9 @@ public class EstablishmentService {
         newsList.add(news);
 
         establishmentDAO.save(establishment);
-        newsService.addNew(news);
 
         return ResponseEntity.ok("News added to establishment successfully");
     }
-
     public ResponseEntity<String> updateNewInEstablishment(int id, News updatedNews) {
         Establishment establishment = establishmentDAO.getById(id);
         if (establishment == null) {
@@ -175,4 +216,15 @@ public class EstablishmentService {
         establishmentDAO.save(establishmentForDesActivite);
     }
 
+    public List<Establishment> getAllActivated() {
+        List<Establishment> establishments = establishmentDAO.findAllByActivatedTrue();
+        establishments.stream().forEach(Establishment::calculateRating);
+        return establishments;
+    }
+
+    public List<Establishment> getAllDesActivated() {
+        List<Establishment> establishments = establishmentDAO.findAllByActivatedFalse();
+        establishments.stream().forEach(Establishment::calculateRating);
+        return establishments;
+    }
 }

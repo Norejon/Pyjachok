@@ -24,6 +24,7 @@ public class Grades {
     @JsonBackReference
     private User user;
 
+
     @ManyToOne
     @JoinColumn(name = "establishment_id")
     @JsonBackReference

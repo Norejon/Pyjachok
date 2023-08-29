@@ -17,6 +17,19 @@ import java.util.Map;
 public class EstablishmentController {
     private EstablishmentService establishmentService;
 
+    @GetMapping("/activated")
+    public List<Establishment> getActivatedEstablishments() {
+        return establishmentService.getAllActivated();
+    }
+
+    @GetMapping("/desactivated")
+    public List<Establishment> getDesactivatedEstablishments() {
+        return establishmentService.getAllDesActivated();
+    }
+
+    @PostMapping("/activate")
+
+
     @GetMapping
     public List<Establishment> getEstablishments() {
         return establishmentService.getAll();
@@ -25,6 +38,12 @@ public class EstablishmentController {
     @GetMapping("/{id}")
     public Establishment getEstablishmentById(@PathVariable int id) {
         return establishmentService.getById(id);
+    }
+
+    @GetMapping("/{id}/news")
+    public ResponseEntity<List<News>> getNewsOfEstablishment(@PathVariable int id) {
+        List<News> newsList = establishmentService.getNewsOfEstablishment(id);
+        return ResponseEntity.ok(newsList);
     }
 
     @DeleteMapping("/{id}")
@@ -59,11 +78,11 @@ public class EstablishmentController {
     public ResponseEntity<String> changeEstablishmentUser(@PathVariable int establishmentId, @PathVariable int userId) {
         return establishmentService.changeEstablishmentUser(establishmentId, userId);
     }
-    @PutMapping("/activite/{id}")
+    @PutMapping("/activate/{id}")
     public void activiteEstablishment(@PathVariable int id){
         establishmentService.activateEstablishment(id);
     }
-    @PutMapping("/desactivite/{id}")
+    @PutMapping("/desactivate/{id}")
     public void desActiviteEstablishment(@PathVariable int id){
         establishmentService.desActivateEstablishment(id);
     }

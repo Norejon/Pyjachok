@@ -1,6 +1,6 @@
 package com.example.pyjachok.models;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -10,20 +10,20 @@ import lombok.*;
 @Getter
 @Setter
 @ToString
-@Table(name = "news")
-public class News {
+public class Contacts {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
-    private String title;
-    private String text;
-    private String photo;
 
-    @Enumerated(EnumType.STRING)
-    private Type type = Type.ANY;
+    private String website;
+    private String phone;
+    private String email;
+    private String telegram;
+    private String instagram;
+    private String others;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "establishment_id")
-    @JsonIgnore
+    @JsonBackReference
     private Establishment establishment;
 }

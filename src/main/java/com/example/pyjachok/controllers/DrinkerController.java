@@ -13,6 +13,7 @@ import java.util.List;
 @RestController
 @AllArgsConstructor
 @RequestMapping("/drinkers")
+@CrossOrigin(origins = "http://localhost:4200")
 public class DrinkerController {
     private DrinkerService drinkerService;
 
@@ -26,9 +27,9 @@ public class DrinkerController {
         return drinkerService.getById(id);
     }
 
-    @PostMapping
-    public ResponseEntity<String> saveDrinker(@RequestBody DrinkerDTO drinkerDTO, Principal principal) {
-        drinkerService.saveDrinker(drinkerDTO, principal.getName());
+    @PostMapping("/{id}")
+    public ResponseEntity<String> saveDrinker(@PathVariable int id, @RequestBody DrinkerDTO drinkerDTO, Principal principal) {
+        drinkerService.saveDrinker(id,drinkerDTO, principal.getName());
         return ResponseEntity.ok("Drinker saved successfully");
     }
 

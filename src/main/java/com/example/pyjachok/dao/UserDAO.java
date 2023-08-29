@@ -1,5 +1,6 @@
 package com.example.pyjachok.dao;
 
+import com.example.pyjachok.models.Establishment;
 import com.example.pyjachok.models.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -11,8 +12,9 @@ public interface UserDAO extends JpaRepository<User, Integer> {
 
     User deleteById(int id);
 
-    User findByUsername(String username);
+    User findByNickname(String nickname);
 
     User findByEmail(String email);
+    List<User> findByFavorite(Establishment establishment);
 
 }

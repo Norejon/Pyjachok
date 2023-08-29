@@ -3,12 +3,10 @@ package com.example.pyjachok.services;
 import com.example.pyjachok.dao.GradesDAO;
 import com.example.pyjachok.models.Establishment;
 import com.example.pyjachok.models.Grades;
-import com.example.pyjachok.models.News;
 import com.example.pyjachok.models.User;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import java.security.Principal;
 import java.util.List;
@@ -32,17 +30,26 @@ public class GradesService {
             return;
         }
 
+        Grades existingGrade = gradesDAO.findByUserAndEstablishment(user, establishment);
+
         int grade = (int) requestBody.getOrDefault("grade", 0);
         String text = (String) requestBody.getOrDefault("text", "");
 
-        Grades gradeObject = new Grades();
-        gradeObject.setGrade(grade);
-        gradeObject.setText(text);
-        gradeObject.setUser(user);
-        gradeObject.setEstablishment(establishment);
-
-        gradesDAO.save(gradeObject);
-        System.out.println("Grade is successfully added");
+        if (existingGrade != null) {
+            existingGrade.setGrade(grade);
+            existingGrade.setText(text);
+            gradesDAO.save(existingGrade);
+            System.out.println("Grade is successfully updated");
+        } else {
+            Grades gradeObject = new Grades();
+            gradeObject.setGrade(grade);
+            gradeObject.setText(text);
+            gradeObject.setUser(user);
+            gradeObject.setEstablishment(establishment);
+            gradesDAO.save(gradeObject);
+            System.out.println("Grade is successfully added");
+        }
+        establishment.calculateRating();
     }
 
     public void deleteGrade(@PathVariable int id) {
@@ -62,7 +69,8 @@ public class GradesService {
         User user = userService.getUserByEmail(email);
 
         if (user != null) {
-            Grades grade = gradesDAO.findById(id);
+            Establishment establishment = establishmentService.getById(id);
+            Grades grade = gradesDAO.findByEstablishment(establishment);
             if (grade != null) {
 
                 int newGrade = (int) gradeMap.getOrDefault("grade", grade.getGrade());

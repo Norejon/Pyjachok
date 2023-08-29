@@ -1,5 +1,6 @@
 package com.example.pyjachok.models.dto;
 
+import com.example.pyjachok.models.Gender;
 import lombok.*;
 
 @Data
@@ -7,7 +8,9 @@ import lombok.*;
 @Builder
 @NoArgsConstructor
 public class UserDTO {
-    private String username;
+    private String nickname;
     private String password;
     private String email;
+    private String birth;
+    private Gender gender;
 }

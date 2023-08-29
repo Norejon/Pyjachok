@@ -1,15 +1,16 @@
 package com.example.pyjachok.services;
 
-import com.example.pyjachok.dao.UserDAO;
-import com.example.pyjachok.models.Establishment;
-import com.example.pyjachok.models.User;
+import com.example.pyjachok.dao.*;
+import com.example.pyjachok.models.*;
 import com.example.pyjachok.models.dto.UserDTO;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import jakarta.mail.MessagingException;
+import jakarta.transaction.Transactional;
 import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -44,6 +45,18 @@ public class UserService implements UserDetailsService {
     private EstablishmentService establishmentService;
     @Autowired
     private MailService mailService;
+    @Autowired
+    private UserEstablishmentDAO userEstablishmentDAO;
+    @Autowired
+    private EstablishmentDAO establishmentDAO;
+    @Autowired
+    private DrinkerDAO drinkerDAO;
+    @Autowired
+    private GradesDAO gradesDAO;
+
+    @Autowired
+    private Environment env;
+
 
     public List<User> getUsers() {
         System.out.println("done");
@@ -54,15 +67,40 @@ public class UserService implements UserDetailsService {
         return userDAO.findById(id);
     }
 
-    public User deleteUserById(@PathVariable int id) {
-        return userDAO.deleteById(id);
+    @Transactional
+    public void deleteUserById(int id) {
+        User user = userDAO.findById(id);
+        if (user != null) {
+            List<Establishment> establishments = establishmentDAO.findByUser(user);
+            for (Establishment establishment : establishments) {
+                establishment.setUser(null);
+                establishmentDAO.save(establishment);
+            }
+
+            List<Drinker> drinkers = drinkerDAO.findByUser(user);
+            for (Drinker drinker : drinkers) {
+                drinker.setUser(null);
+                drinkerDAO.save(drinker);
+            }
+
+            List<Grades> grades = gradesDAO.findByUser(user);
+            for (Grades grade : grades) {
+                grade.setUser(null);
+                gradesDAO.save(grade);
+            }
+
+            userDAO.delete(user);
+        }
     }
 
     public void saveUser(@RequestBody UserDTO userDTO) throws MessagingException {
         User user = new User();
-        user.setUsername(userDTO.getUsername());
+        user.setNickname(userDTO.getNickname());
         user.setEmail(userDTO.getEmail());
         user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
+        user.setBirth(userDTO.getBirth());
+        user.setGender(userDTO.getGender());
+        user.setEnable(false);
         userDAO.save(user);
         mailService.send(userDTO);
     }
@@ -88,9 +126,33 @@ public class UserService implements UserDetailsService {
         userDAO.save(user);
     }
 
-    public void updateUserById(int id, User updatedUser) {
-        updatedUser.setId(id);
-        userDAO.save(updatedUser);
+    public void removeEstablishmentFromFavorites(String username, int establishmentId) {
+        User user = userDAO.findByEmail(username);
+        if (user == null) {
+            return;
+        }
+
+        Establishment establishment = establishmentService.getById(establishmentId);
+        if (establishment == null) {
+            return;
+        }
+
+        List<Establishment> favorites = user.getFavorite();
+        if (!favorites.contains(establishment)) {
+            return;
+        }
+
+        favorites.remove(establishment);
+        user.setFavorite(favorites);
+        userDAO.save(user);
+    }
+
+    public void updateUserById(int id, UserDTO updatedUser) {
+        User user = userDAO.findById(id);
+        user.setNickname(updatedUser.getNickname());
+        user.setBirth(updatedUser.getBirth());
+        user.setGender(updatedUser.getGender());
+        userDAO.save(user);
     }
 
     public ResponseEntity<String> login(@RequestBody UserDTO userDTO) {
@@ -99,10 +161,12 @@ public class UserService implements UserDetailsService {
         System.out.println(usernamePasswordAuthenticationToken.getCredentials());
         Authentication authenticate = authenticationManager.authenticate(usernamePasswordAuthenticationToken);
         System.out.println(authenticate);
+        String jwtDecodingKey = env.getProperty("jwt.decodingkey");
+        System.out.println("-------"+jwtDecodingKey+"----------");
         if (authenticate != null) {
             String jwtToken = Jwts.builder()
                     .setSubject(authenticate.getName())
-                    .signWith(SignatureAlgorithm.HS512, "secret".getBytes(StandardCharsets.UTF_8))
+                    .signWith(SignatureAlgorithm.HS512, jwtDecodingKey.getBytes(StandardCharsets.UTF_8))
                     .compact();
             System.out.println(jwtToken);
             HttpHeaders httpHeaders = new HttpHeaders();
@@ -121,8 +185,8 @@ public class UserService implements UserDetailsService {
         return byEmail;
     }
 
-    public User getUserByUsername(String username) {
-        return userDAO.findByUsername(username);
+    public User getUserByNickname(String nickname) {
+        return userDAO.findByNickname(nickname);
     }
 
     public User getUserByEmail(String email) {

@@ -2,6 +2,7 @@ package com.example.pyjachok.controllers;
 
 import com.example.pyjachok.models.Complaints;
 import com.example.pyjachok.services.ComplaintsService;
+import jakarta.mail.MessagingException;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,9 +26,10 @@ public class ComplaintsController {
         return complaintsService.getComplaintById(id);
     }
 
-    @PostMapping("/{establishmentId}")
-    public ResponseEntity<String> saveComplaint(@PathVariable int establishmentId, Principal principal, @RequestBody Complaints complaints) {
-        complaintsService.saveComplaint(principal, establishmentId, complaints);
+    @PostMapping("/{id}")
+    public ResponseEntity<String> saveComplaint(@PathVariable int id, Principal principal, @RequestBody Complaints complaints) throws MessagingException {
+        System.out.println(complaints.getText());
+        complaintsService.saveComplaint(principal, id, complaints);
         return ResponseEntity.ok("Complaint saved successfully.");
     }
 

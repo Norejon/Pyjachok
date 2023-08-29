@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.List;
 
 @RestController
@@ -34,6 +35,11 @@ public class UserController {
     public List<User> getUsers() {
         return userService.getUsers();
     }
+    @GetMapping("/me")
+    public User getAuthUser(Principal principal){
+        System.out.println(userService.getUserByEmail(principal.getName()).getUsername());
+        return userService.getUserByEmail(principal.getName());
+    }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteUserById(@PathVariable int id) {
@@ -42,7 +48,7 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<String> updateUserById(@PathVariable int id, @RequestBody User updatedUser) {
+    public ResponseEntity<String> updateUserById(@PathVariable int id, @RequestBody UserDTO updatedUser) {
         userService.updateUserById(id, updatedUser);
         return ResponseEntity.ok("User updated successfully.");
     }
@@ -54,7 +60,6 @@ public class UserController {
 
     @PostMapping("/logout")
     public ResponseEntity<String> logout(HttpServletRequest request) {
-        // Отримання токену з заголовку Authorization
         String token = request.getHeader("Authorization");
         if (token != null && token.startsWith("Bearer ")) {
             token = token.substring(7);

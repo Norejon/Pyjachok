@@ -1,7 +1,6 @@
 package com.example.pyjachok.services;
 
 import com.example.pyjachok.dao.NewsDAO;
-import com.example.pyjachok.models.Establishment;
 import com.example.pyjachok.models.News;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -35,6 +34,7 @@ public class NewsService {
     public void updateNew(int id, News updatedNew) {
         News existingNew = newsDAO.findById(id);
         if (existingNew != null) {
+            existingNew.setTitle(updatedNew.getTitle());
             existingNew.setText(updatedNew.getText());
             existingNew.setPhoto(updatedNew.getPhoto());
             existingNew.setType(updatedNew.getType());

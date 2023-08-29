@@ -8,6 +8,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
+import org.springframework.core.env.Environment;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -22,13 +23,16 @@ public class JWTFilter extends OncePerRequestFilter {
 
     private UserDAO userDAO;
 
+    private final Environment env;
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         String authorization = request.getHeader("Authorization");
+        String jwtDecodingKey = env.getProperty("jwt.decodingkey");
         if (authorization != null && authorization.startsWith("Bearer ")) {
             String token = authorization.replace("Bearer", "");
             String decodedData = Jwts.parser()
-                    .setSigningKey("secret".getBytes(StandardCharsets.UTF_8))
+                    .setSigningKey(jwtDecodingKey.getBytes(StandardCharsets.UTF_8))
                     .parseClaimsJws(token)
                     .getBody()
                     .getSubject();
@@ -46,6 +50,7 @@ public class JWTFilter extends OncePerRequestFilter {
                 System.out.println(SecurityContextHolder.getContext());
             }
         }
+        response.setHeader("Access-Control-Allow-Origin","http://localhost:4200");
         filterChain.doFilter(request, response);
     }
 }

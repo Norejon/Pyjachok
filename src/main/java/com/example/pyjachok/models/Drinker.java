@@ -23,6 +23,7 @@ public class Drinker {
     private int countOfPeople;
     private String whoPay;
     private int budget;
+    private String phone;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")

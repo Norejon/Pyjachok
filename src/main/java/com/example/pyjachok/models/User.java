@@ -1,15 +1,15 @@
 package com.example.pyjachok.models;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 @Entity
 @AllArgsConstructor
@@ -22,8 +22,12 @@ public class User implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
+
     @Column(unique = true)
-    private String username;
+    private String nickname;
+    private String birth;
+    @Enumerated(EnumType.STRING)
+    private Gender gender;
 
     private String password;
     @Column(unique = true)
@@ -38,12 +42,11 @@ public class User implements UserDetails {
     @Enumerated(EnumType.STRING)
     private Role role = Role.USER;
 
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     @JsonIgnore
     private List<UserEstablishment> userEstablishments;
 
     @OneToMany(mappedBy = "user")
-    @JsonBackReference
     private List<Grades> gradesList;
 
     @OneToMany(mappedBy = "user")

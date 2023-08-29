@@ -37,53 +37,27 @@ public class SecurityConfig {
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .authorizeHttpRequests()
-
+                .requestMatchers(HttpMethod.GET,"/users").permitAll()
                 .requestMatchers(HttpMethod.POST, "/users").permitAll()
                 .requestMatchers(HttpMethod.POST, "/users/login").permitAll()
-                .requestMatchers(HttpMethod.POST,"/users/logout").authenticated()
-                .requestMatchers(HttpMethod.GET, "/users").permitAll()
-                .requestMatchers(HttpMethod.GET, "/users/{id}").permitAll()
-                .requestMatchers(HttpMethod.PUT, "/users/{id}").authenticated()
                 .requestMatchers(HttpMethod.GET, "/users/activation/{email}").permitAll()
-                .requestMatchers(HttpMethod.DELETE, "/users/{id}").authenticated()
 
-                .requestMatchers(HttpMethod.PUT, "/establishments/{establishmentId}/users/{userId}").permitAll()
-                .requestMatchers(HttpMethod.POST, "/establishments").permitAll()
-                .requestMatchers(HttpMethod.POST, "/establishments/{id}/news/add").permitAll()
-                .requestMatchers(HttpMethod.POST, "/establishments/{id}/add_favorite").permitAll()
-                .requestMatchers(HttpMethod.GET, "/establishments").permitAll()
-                .requestMatchers(HttpMethod.GET, "/establishments/{id}").permitAll()
-                .requestMatchers(HttpMethod.GET, "/establishments/user").permitAll()
-                .requestMatchers(HttpMethod.PUT, "/establishments/news/{id}").permitAll()
-                .requestMatchers(HttpMethod.PUT, "/establishments/{id}").permitAll()
-                .requestMatchers(HttpMethod.PUT,"/establishments/activite/{id}").permitAll()
-                .requestMatchers(HttpMethod.PUT,"/establishments/desactivite/{id}").permitAll()
-                .requestMatchers(HttpMethod.DELETE, "/establishments/{id}").permitAll()
+                .requestMatchers(HttpMethod.PUT, "/establishments/{establishmentId}/users/{userId}").hasAuthority("ADMIN")
+                .requestMatchers(HttpMethod.PUT,"/establishments/activate/{id}").hasAuthority("ADMIN")
+                .requestMatchers(HttpMethod.PUT,"/establishments/desactivate/{id}").hasAuthority("ADMIN")
 
-                .requestMatchers(HttpMethod.POST, "/drinkers").authenticated()
-                .requestMatchers(HttpMethod.GET, "/drinkers").authenticated()
-                .requestMatchers(HttpMethod.GET, "/drinkers/{id}").authenticated()
-                .requestMatchers(HttpMethod.PUT, "/drinkers/{id}").authenticated()
-                .requestMatchers(HttpMethod.DELETE, "/drinkers/{id}").authenticated()
+                .requestMatchers(HttpMethod.GET, "/grades").hasAuthority("ADMIN")
 
-                .requestMatchers(HttpMethod.POST, "/grades/{id}").authenticated()
-                .requestMatchers(HttpMethod.GET, "/grades").authenticated()
-                .requestMatchers(HttpMethod.GET, "/grades/{id}").authenticated()
-                .requestMatchers(HttpMethod.PUT, "/grades/{id}").authenticated()
-                .requestMatchers(HttpMethod.DELETE, "/grades/{id}").authenticated()
-
-                .requestMatchers(HttpMethod.GET, "/news").permitAll()
-                .requestMatchers(HttpMethod.GET, "/news/{id}").permitAll()
-                .requestMatchers(HttpMethod.DELETE, "/news/{id}").permitAll()
-                .requestMatchers(HttpMethod.PUT, "/news/{id}").permitAll()
-
-                .requestMatchers(HttpMethod.POST,"/complaints/{establishmentId}").authenticated()
                 .requestMatchers(HttpMethod.GET, "/complaints").hasAuthority("ADMIN")
                 .requestMatchers(HttpMethod.GET, "/complaints/{id}").hasAuthority("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/complaints/{id}").hasAuthority("ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/complaints/{id}").hasAuthority("ADMIN")
 
-                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                .requestMatchers(HttpMethod.GET,"/analitic").hasAuthority("ADMIN")
+                .requestMatchers(HttpMethod.GET,"/analitic/{id}").hasAuthority("ADMIN")
+                .requestMatchers(HttpMethod.POST,"/analitic/{id}").hasAuthority("ADMIN")
+
+                .anyRequest().permitAll()
                 .and().cors().configurationSource(corsConfigurationSource())
                 .and()
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
@@ -105,10 +79,10 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedMethods(Arrays.asList("GET", HttpMethod.POST.name()));
-        configuration.addAllowedOrigin("http://localhost:4200");
-        configuration.addAllowedOrigin("https://mail.google.com");
-        configuration.addExposedHeader("Authorization");
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:4200", "https://mail.google.com"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Cache-Control", "Content-Type"));
+        configuration.setExposedHeaders(Arrays.asList("Authorization"));
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
