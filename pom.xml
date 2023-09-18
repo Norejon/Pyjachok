@@ -109,6 +109,8 @@
                             <artifactId>lombok</artifactId>
                         </exclude>
                     </excludes>
+                    <outputDirectory>backend</outputDirectory>
+                    <finalName>app</finalName>
                 </configuration>
             </plugin>
         </plugins>
